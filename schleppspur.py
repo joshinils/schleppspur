@@ -4,6 +4,9 @@ import pygame
 import time
 from typing import *
 import random
+import numpy as np
+
+from pygame import mouse
 
 class pge:
     screen: 'pygame.Surface'
@@ -40,8 +43,8 @@ class pge:
             now = time.time()
             self.delta_t = now - self.t
             if self.max_fps > 0 and self.delta_t < 1/self.max_fps:
-                print(self.delta_t)
-                print(1/self.max_fps-self.delta_t)
+                # print(self.delta_t)
+                # print(1/self.max_fps-self.delta_t)
 
                 time.sleep(1/self.max_fps - self.delta_t)
                 now = time.time()
@@ -54,32 +57,45 @@ class pge:
 
 
     def OnUserCreate(self: 'pge'):
-        print("pge::OnUserCreate")
+        # print("pge::OnUserCreate")
         pass
 
     def OnUserUpdate(self: 'pge', delta_t: float) -> bool:
-        print("pge::OnUserUpdate")
+        # print("pge::OnUserUpdate")
         return True
 
 class game(pge):
     def OnUserCreate(self: 'game'):
-        print("game::OnUserCreate")
+        # print("game::OnUserCreate")
         self.t = time.time() # time seconds since 1970
 
+    lastPos = np.array([0, 0])
+
     def OnUserUpdate(self: 'game', delta_t: float) -> bool:
-        print("game::OnUserUpdate")
+        # print("game::OnUserUpdate")
 
         fps = 1/delta_t
         self.screen.fill((delta_t, fps % 255, 255))
 
+
+        mousePos = pygame.mouse.get_pos()
+        print(mousePos)
+
+        pygame.draw.circle(self.screen, (200, 0, 0), self.lastPos, 6)
+        pygame.draw.circle(self.screen, (250, 250, 250), mousePos, 8)
+
+        dir = self.lastPos - mousePos
+        norm = np.linalg.norm(dir)
+
+        if norm != 0:
+            dir = dir / norm
+
+        #self.drawLine(mousePos, self.lastPos)
+        self.lastPos = self.lastPos - dir * (norm -200)
+
+        self.drawLine(mousePos, self.lastPos)
+
         title = "fps: " + str(int(fps*100)/100).ljust(6) + " delta_t: " + str(delta_t)
-        print(title)
-
-        for i in range(1000):
-            self.drawLine((random.randint(0, self.ScreenWidth),random.randint(0, self.ScreenHeight)),
-                          (random.randint(0, self.ScreenWidth),random.randint(0, self.ScreenHeight)),
-                          (random.randint(0,255), random.randint(0,255), random.randint(0,255)))
-
         pygame.display.set_caption(title.ljust(1000))
         return True
 
