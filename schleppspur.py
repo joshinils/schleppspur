@@ -64,15 +64,30 @@ class pge:
         # print("pge::OnUserUpdate")
         return True
 
+class nodePair:
+    draggerPos: Tuple[float, float]
+    stonePos: Tuple[float, float]
+    time: float
+
+    def __init__(self: 'nodePair', draggerPos: Tuple[float, float], stonePos: Tuple[float, float], time: float):
+        self.draggerPos = draggerPos
+        self.stonePos = stonePos
+        self.time = time
+        pass
+
 class game(pge):
+    track: List[nodePair] = []
+    lastPos = np.array([0, 0])
+    timeAcc: float = 0
+
     def OnUserCreate(self: 'game'):
         # print("game::OnUserCreate")
         self.t = time.time() # time seconds since 1970
 
-    lastPos = np.array([0, 0])
-
     def OnUserUpdate(self: 'game', delta_t: float) -> bool:
         # print("game::OnUserUpdate")
+
+        self.timeAcc += delta_t
 
         fps = 1/delta_t
         self.screen.fill((delta_t, fps % 255, 255))
@@ -93,15 +108,56 @@ class game(pge):
         #self.drawLine(mousePos, self.lastPos)
         self.lastPos = self.lastPos - dir * (norm -200)
 
-        self.drawLine(mousePos, self.lastPos)
+        self.track.append(nodePair(self.lastPos, mousePos, self.timeAcc))
+        self.drawTrack()
 
         title = "fps: " + str(int(fps*100)/100).ljust(6) + " delta_t: " + str(delta_t)
         pygame.display.set_caption(title.ljust(1000))
         return True
 
+    def drawTrack(self: 'game'):
+        maxLen = 10
+        while len(self.track) > maxLen:
+            # search closest to remove
+            prev = None
+            next = None
+            curr = None
+
+            minWeight = 1080*1920
+            deleteIdx = None
+
+            for i in range(len(self.track)):
+                prev = curr
+                curr = next
+                next = self.track[i]
+
+                print(prev, curr, next)
+                if prev == None:
+                    continue
+
+                curr.deleteWeight = (  np.linalg.norm(prev.draggerPos - next.draggerPos)
+                                     - np.linalg.norm(prev.draggerPos - curr.draggerPos)
+                                     - np.linalg.norm(next.draggerPos - curr.draggerPos))
+                if minWeight > curr.deleteWeight:
+                    minWeight = curr.deleteWeight
+                    deleteIdx = i
+
+            for p in self.track:
+                print(p.deleteWeight)
+
+            del self.track[deleteIdx]
+
+        last_p = None
+        for p in self.track:
+            self.drawLine(p.stonePos, p.draggerPos)
+            if last_p != None:
+                self.drawLine(last_p.draggerPos, p.draggerPos)
+                self.drawLine(last_p.stonePos, p.stonePos)
+            last_p = p
+
 def main():
 
-    g=game()
+    g = game()
     if g.Construct(1920, 1080):
         g.Start()
 
