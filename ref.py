@@ -26,14 +26,14 @@ if __name__ == "__main__":
 
     at_1 = lst[1]
 
-    at_1.setVal(7)
+    at_1.val = 7
 
     print(lst)
     print(at_1)
     print()
 
 
-    lst[1].setVal(42)
+    lst[1].val = 42
 
     print(lst)
     print(at_1)
